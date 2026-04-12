@@ -1,0 +1,37 @@
+<Project Sdk="Microsoft.NET.Sdk.Worker">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>dotnet-DocumentoElectronico-c418c28e-b197-4e3a-a498-8db27a34559f</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MailKit" Version="4.15.1" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.5" />
+    <PackageReference Include="Microsoft.Extensions.Hosting.WindowsServices" Version="10.0.5" />
+    <PackageReference Include="MimeKit" Version="4.15.1" />
+    <PackageReference Include="Npgsql" Version="10.0.2" />
+    <PackageReference Include="Serilog" Version="4.3.1" />
+    <PackageReference Include="Serilog.Extensions" Version="8.1.0" />
+    <PackageReference Include="Serilog.Sinks.Console" Version="6.1.1" />
+    <PackageReference Include="Serilog.Sinks.File" Version="7.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="logs\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="Sap.Data.Hana.Net.v6.0">
+      <HintPath>..\..\..\..\..\Program Files\sap\hdbclient\dotnetcore\v6.0\Sap.Data.Hana.Net.v6.0.dll</HintPath>
+    </Reference>
+    <Reference Include="Sap.EntityFrameworkCore.Hana.NetTopologySuite.v7.0">
+      <HintPath>..\..\..\..\..\Program Files\sap\hdbclient\dotnetcore\v6.0\Sap.EntityFrameworkCore.Hana.NetTopologySuite.v7.0.dll</HintPath>
+    </Reference>
+    <Reference Include="Sap.EntityFrameworkCore.Hana.v7.0">
+      <HintPath>..\..\..\..\..\Program Files\sap\hdbclient\dotnetcore\v6.0\Sap.EntityFrameworkCore.Hana.v7.0.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+</Project>
