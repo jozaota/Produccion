@@ -44,14 +44,14 @@ namespace DocumentosElectronicos
 
             while (!stoppingToken.IsCancellationRequested)
             {
-                //var espera = CalcularEspera(DateTime.Now.TimeOfDay);
+                var espera = CalcularEspera(DateTime.Now.TimeOfDay);
 
-                //_logger.LogInformation(
-                //    "Próxima ejecución en {Espera:hh\\:mm\\:ss}.",
-                //    espera);
+                _logger.LogInformation(
+                    "Próxima ejecución en {Espera:hh\\:mm\\:ss}.",
+                    espera);
 
-                //try { await Task.Delay(espera, stoppingToken); }
-                //catch (OperationCanceledException) { break; }
+                try { await Task.Delay(espera, stoppingToken); }
+                catch (OperationCanceledException) { break; }
 
                 if (!stoppingToken.IsCancellationRequested)
                     await EjecutarProcesoAsync(stoppingToken);
