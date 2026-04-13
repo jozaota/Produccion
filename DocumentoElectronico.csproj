@@ -20,18 +20,18 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="logs\" />
+    <Reference Include="Sap.Data.Hana.Net.v6.0">
+      <HintPath>..\..\..\..\..\..\Program Files\sap\hdbclient\dotnetcore\v6.0\Sap.Data.Hana.Net.v6.0.dll</HintPath>
+    </Reference>
+    <Reference Include="Sap.EntityFrameworkCore.Hana.NetTopologySuite.v7.0">
+      <HintPath>..\..\..\..\..\..\Program Files\sap\hdbclient\dotnetcore\v6.0\Sap.EntityFrameworkCore.Hana.NetTopologySuite.v7.0.dll</HintPath>
+    </Reference>
+    <Reference Include="Sap.EntityFrameworkCore.Hana.v7.0">
+      <HintPath>..\..\..\..\..\..\Program Files\sap\hdbclient\dotnetcore\v6.0\Sap.EntityFrameworkCore.Hana.v7.0.dll</HintPath>
+    </Reference>
   </ItemGroup>
 
   <ItemGroup>
-    <Reference Include="Sap.Data.Hana.Net.v6.0">
-      <HintPath>..\..\..\..\..\Program Files\sap\hdbclient\dotnetcore\v6.0\Sap.Data.Hana.Net.v6.0.dll</HintPath>
-    </Reference>
-    <Reference Include="Sap.EntityFrameworkCore.Hana.NetTopologySuite.v7.0">
-      <HintPath>..\..\..\..\..\Program Files\sap\hdbclient\dotnetcore\v6.0\Sap.EntityFrameworkCore.Hana.NetTopologySuite.v7.0.dll</HintPath>
-    </Reference>
-    <Reference Include="Sap.EntityFrameworkCore.Hana.v7.0">
-      <HintPath>..\..\..\..\..\Program Files\sap\hdbclient\dotnetcore\v6.0\Sap.EntityFrameworkCore.Hana.v7.0.dll</HintPath>
-    </Reference>
+    <Folder Include="logs\" />
   </ItemGroup>
 </Project>

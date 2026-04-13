@@ -47,8 +47,8 @@ namespace DocumentosElectronicos
                 var espera = CalcularEspera(DateTime.Now.TimeOfDay);
 
                 _logger.LogInformation(
-                    "Próxima ejecución en {Espera:hh\\:mm\\:ss}.",
-                    espera);
+                    "Próxima ejecución: {Hora:HH:mm:ss} (en {Espera:mm\\:ss} minutos).",
+                    DateTime.Now.Add(espera), espera);
 
                 try { await Task.Delay(espera, stoppingToken); }
                 catch (OperationCanceledException) { break; }

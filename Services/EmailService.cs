@@ -33,19 +33,36 @@ namespace DocumentosElectronicos.Services
             List<DocumentoElectronico> documentosDelDia,
             List<DocumentoElectronico> rechazadosMesActualYAnterior)
         {
-            var aprobadosHoy = documentosDelDia.Count(d => d.Estado == "APROBADO");
-            var rechazadosHoy = documentosDelDia.Count(d => d.Estado == "RECHAZADO");
+            // Envío separado por empresa con sus propios destinatarios
+            var empresaIds = _settings.Empresas.Keys.OrderBy(id => id).ToList();
 
-            var html = GenerarHtml(aprobadosHoy, rechazadosHoy, rechazadosMesActualYAnterior);
+            foreach (var empresaId in empresaIds)
+            {
+                var empresa = _settings.Empresas[empresaId];
 
-            var todosDestinatarios = _settings.DestinatariosEmpresa1
-                .Concat(_settings.DestinatariosEmpresa2)
-                .ToList();
+                var destinatarios = empresaId == 1
+                    ? _settings.DestinatariosEmpresa1
+                    : _settings.DestinatariosEmpresa2;
 
-            await EnviarMailAsync(todosDestinatarios, _settings.EmailAsunto, html);
+                if (destinatarios == null || destinatarios.Count == 0)
+                {
+                    _logger.LogWarning("Empresa {Nombre}: sin destinatarios configurados, se omite.", empresa.Nombre);
+                    continue;
+                }
+
+                var docsDia = documentosDelDia.Where(d => d.EmpresaId == empresaId).ToList();
+                var rechazados = rechazadosMesActualYAnterior.Where(d => d.EmpresaId == empresaId).ToList();
+
+                var aprobadosHoy = docsDia.Count(d => d.Estado == "APROBADO");
+                var rechazadosHoy = docsDia.Count(d => d.Estado == "RECHAZADO");
+
+                var html = GenerarHtml(aprobadosHoy, rechazadosHoy, rechazados, empresa.Nombre);
+
+                await EnviarMailAsync(destinatarios, _settings.EmailAsunto, html, empresa.Nombre);
+            }
         }
 
-        private async Task EnviarMailAsync(List<string> destinatarios, string asunto, string htmlBody)
+        private async Task EnviarMailAsync(List<string> destinatarios, string asunto, string htmlBody, string nombreEmpresa)
         {
             var mensaje = new MimeMessage();
             mensaje.From.Add(new MailboxAddress("Impackta · Documentos Electrónicos", _settings.GmailUser));
@@ -53,7 +70,7 @@ namespace DocumentosElectronicos.Services
             foreach (var dest in destinatarios)
                 mensaje.To.Add(MailboxAddress.Parse(dest));
 
-            mensaje.Subject = $"{asunto} — {DateTime.Now:dd/MM/yyyy HH:mm}";
+            mensaje.Subject = $"{asunto} — {nombreEmpresa} — {DateTime.Now:dd/MM/yyyy HH:mm}";
 
             var bodyBuilder = new BodyBuilder { HtmlBody = htmlBody };
             mensaje.Body = bodyBuilder.ToMessageBody();
@@ -66,11 +83,11 @@ namespace DocumentosElectronicos.Services
                 await smtp.SendAsync(mensaje);
                 await smtp.DisconnectAsync(true);
 
-                _logger.LogInformation("Mail enviado a {Count} destinatarios.", destinatarios.Count);
+                _logger.LogInformation("Mail [{Empresa}] enviado a {Count} destinatarios.", nombreEmpresa, destinatarios.Count);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error al enviar mail.");
+                _logger.LogError(ex, "Error al enviar mail [{Empresa}].", nombreEmpresa);
                 throw;
             }
         }
@@ -82,7 +99,8 @@ namespace DocumentosElectronicos.Services
         private static string GenerarHtml(
             int aprobadosHoy,
             int rechazadosHoy,
-            List<DocumentoElectronico> rechazados)
+            List<DocumentoElectronico> rechazados,
+            string nombreEmpresa)
         {
             var cultura = new System.Globalization.CultureInfo("es-PY");
             var fechaGeneracion = DateTime.Now.ToString("dddd, dd 'de' MMMM 'de' yyyy 'a las' HH:mm", cultura);
@@ -124,9 +142,8 @@ namespace DocumentosElectronicos.Services
   .header-title {{ color: #ffffff; font-size: 17px; font-weight: 500; }}
   .header-fecha {{ color: #888; font-size: 12px; margin-top: 3px; }}
   .header-brand {{ text-align: right; }}
-  .header-brand .brand-name {{ font-size: 19px; font-weight: 500; letter-spacing: -0.02em; }}
+  .header-brand .brand-name {{ font-size: 19px; font-weight: 500; letter-spacing: -0.02em; color: #ffffff; }}
   .header-brand .brand-name span {{ color: {ColorRojo}; }}
-  .header-brand .brand-name b {{ color: #aaa; font-weight: 400; }}
   .header-brand .brand-sub {{ color: #555; font-size: 11px; margin-top: 2px; }}
 
   /* ── FRANJA ROJA ── */
@@ -237,9 +254,8 @@ namespace DocumentosElectronicos.Services
     justify-content: space-between;
   }}
   .footer-copy {{ font-size: 12px; color: #666; }}
-  .footer-brand {{ font-size: 13px; font-weight: 500; }}
+  .footer-brand {{ font-size: 13px; font-weight: 500; color: #ffffff; }}
   .footer-brand span {{ color: {ColorRojo}; }}
-  .footer-brand b {{ color: #666; font-weight: 400; }}
 </style>
 </head>
 <body>
@@ -258,11 +274,11 @@ namespace DocumentosElectronicos.Services
       </svg>
       <div>
         <div class='header-title'>Reporte de Documentos Electrónicos</div>
-        <div class='header-fecha'>{fechaGeneracion}</div>
+        <div class='header-fecha'>{fechaGeneracion} · {nombreEmpresa}</div>
       </div>
     </div>
     <div class='header-brand'>
-      <div class='brand-name'>im<span>pack</span><b>ta</b></div>
+      <div class='brand-name'>im<span>pack</span>ta</div>
       <div class='brand-sub'>Sistema de Documentos</div>
     </div>
   </div>
@@ -351,7 +367,7 @@ namespace DocumentosElectronicos.Services
   <div class='footer-stripe'></div>
   <div class='footer'>
     <span class='footer-copy'>Este reporte es generado automáticamente · No responder este correo</span>
-    <span class='footer-brand'>im<span>packta</span> <b>© {DateTime.Now.Year}</b></span>
+    <span class='footer-brand'>im<span>pack</span>ta © {DateTime.Now.Year}</span>
   </div>
 
 </div>
