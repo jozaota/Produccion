@@ -1,4 +1,5 @@
 using DocumentosElectronicos.Models;
+//using DocumentoElectronico.Models;
 using MailKit.Net.Smtp;
 using MailKit.Security;
 using Microsoft.Extensions.Logging;
@@ -30,8 +31,8 @@ namespace DocumentosElectronicos.Services
         // ─────────────────────────────────────────────
 
         public async Task EnviarReporteAsync(
-            List<DocumentoElectronico> documentosDelDia,
-            List<DocumentoElectronico> rechazadosMesActualYAnterior)
+            List<DocumentosElectronicos.Models.DocumentoElectronico> documentosDelDia,
+            List<DocumentosElectronicos.Models.DocumentoElectronico> rechazadosMesActualYAnterior)
         {
             // Envío separado por empresa con sus propios destinatarios
             var empresaIds = _settings.Empresas.Keys.OrderBy(id => id).ToList();
@@ -99,7 +100,7 @@ namespace DocumentosElectronicos.Services
         private static string GenerarHtml(
             int aprobadosHoy,
             int rechazadosHoy,
-            List<DocumentoElectronico> rechazados,
+            List<DocumentosElectronicos.Models.DocumentoElectronico> rechazados,
             string nombreEmpresa)
         {
             var cultura = new System.Globalization.CultureInfo("es-PY");

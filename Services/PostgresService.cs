@@ -63,7 +63,7 @@ namespace DocumentosElectronicos.Services
         /// Documentos CANCELADOS con mayor secuencia por CDC.
         /// Se procesan en SAP B1 vía Service Layer.
         /// </summary>
-        public async Task<List<DocumentoElectronico>> ObtenerDocumentosCanceladosAsync()
+        public async Task<List<DocumentosElectronicos.Models.DocumentoElectronico>> ObtenerDocumentosCanceladosAsync()
         {
             var sql = $@"
                 {SelectBase}
@@ -80,7 +80,7 @@ namespace DocumentosElectronicos.Services
         /// Documentos del día actual con mayor secuencia por CDC.
         /// Usado para calcular los KPIs del reporte de mail.
         /// </summary>
-        public async Task<List<DocumentoElectronico>> ObtenerDocumentosDelDiaAsync()
+        public async Task<List<DocumentosElectronicos.Models.DocumentoElectronico>> ObtenerDocumentosDelDiaAsync()
         {
             var sql = $@"
                 {SelectBase}
@@ -101,7 +101,7 @@ namespace DocumentosElectronicos.Services
         /// Documentos RECHAZADOS del mes actual y anterior con mayor secuencia por CDC.
         /// Se listan en el cuerpo del mail.
         /// </summary>
-        public async Task<List<DocumentoElectronico>> ObtenerDocumentosRechazadosHistoricoAsync()
+        public async Task<List<DocumentosElectronicos.Models.DocumentoElectronico>> ObtenerDocumentosRechazadosHistoricoAsync()
         {
             var sql = $@"
                 {SelectBase}
@@ -118,9 +118,9 @@ namespace DocumentosElectronicos.Services
         // EJECUCIÓN Y MAPEO
         // ─────────────────────────────────────────────
 
-        private async Task<List<DocumentoElectronico>> EjecutarConsultaAsync(string sql, string descripcion)
+        private async Task<List<DocumentosElectronicos.Models.DocumentoElectronico>> EjecutarConsultaAsync(string sql, string descripcion)
         {
-            var documentos = new List<DocumentoElectronico>();
+            var documentos = new List<DocumentosElectronicos.Models.DocumentoElectronico>();
 
             try
             {
@@ -145,13 +145,13 @@ namespace DocumentosElectronicos.Services
             return documentos;
         }
 
-        private static DocumentoElectronico MapearDocumento(NpgsqlDataReader reader)
+        private static DocumentosElectronicos.Models.DocumentoElectronico MapearDocumento(NpgsqlDataReader reader)
         {
             var establecimiento = reader["establecimiento"]?.ToString() ?? string.Empty;
             var puntoExpedicion = reader["puntoexpedicion"]?.ToString() ?? string.Empty;
             var numero = reader["numero"]?.ToString() ?? string.Empty;
 
-            return new DocumentoElectronico
+            return new DocumentosElectronicos.Models.DocumentoElectronico
             {
                 Cdc = reader["cdc"]?.ToString() ?? string.Empty,
                 TipoDocumento = Convert.ToInt32(reader["tipodocumento"]),

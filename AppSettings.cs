@@ -29,6 +29,11 @@ namespace DocumentosElectronicos
         // Horarios de ejecución (formato HH:mm)
         public string HorarioMañana { get; set; } = "10:00";
         public string HorarioTarde { get; set; } = "16:00";
+
+        // NUEVAS:
+        public List<string> DestinatariosMovimiento { get; set; } = new();
+        public string HorarioMovimientoSemana { get; set; } = "17:00";  // Lun–Vie
+        public string HorarioMovimientoSabado { get; set; } = "12:00";  // Sáb
     }
 
     public class EmpresaSapConfig

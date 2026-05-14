@@ -193,7 +193,7 @@ namespace DocumentosElectronicos.Services
         /// Actualiza el campo U_ESTDOC en SAP B1 usando el DocEntry obtenido desde HANA.
         /// </summary>
         public async Task<bool> ActualizarDocumentoCanceladoAsync(
-            DocumentoElectronico documento, int docEntry)
+            DocumentosElectronicos.Models.DocumentoElectronico documento, int docEntry)
         {
             try
             {

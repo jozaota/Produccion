@@ -62,7 +62,7 @@ namespace DocumentosElectronicos.Services
         ///   TipoDoc 6 → OINV
         ///   TipoDoc 7 → ODLN primero, si nulo → OWTR
         /// </summary>
-        public async Task<int> BuscarDocEntryAsync(DocumentoElectronico documento)
+        public async Task<int> BuscarDocEntryAsync(DocumentosElectronicos.Models.DocumentoElectronico documento)
         {
             if (!_settings.Empresas.TryGetValue(documento.EmpresaId, out var empresa))
             {
@@ -157,7 +157,7 @@ namespace DocumentosElectronicos.Services
             }
         }
 
-        private int LogTipoNoReconocido(DocumentoElectronico documento)
+        private int LogTipoNoReconocido(DocumentosElectronicos.Models.DocumentoElectronico documento)
         {
             _logger.LogWarning(
                 "TipoDocumento {Tipo} no reconocido para CDC {Cdc}.",

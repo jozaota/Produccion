@@ -8,6 +8,7 @@ using Serilog.Events;
 using Serilog.Sinks.File;      // habilita WriteTo.File(...)
 using Serilog.Sinks.SystemConsole;   // habilita WriteTo.Console(...)
 using Serilog.Extensions.Hosting;   // habilita UseSerilog() en el HostBuilder
+using QuestPDF.Infrastructure;
 
 // ── Carpeta de logs ──────────────────────────────────────────────────────────
 // AppContext.BaseDirectory apunta a bin\Debug\net8.0-windows\ en debug
@@ -39,6 +40,8 @@ try
     Log.Information("Iniciando servicio DocumentosElectronicos...");
     Log.Information("Logs en: {LogsDir}", logsDir);
 
+    QuestPDF.Settings.License = LicenseType.Community; // o LicenseType.Pro si tienes una licencia de pago
+
     IHost host = Host.CreateDefaultBuilder(args)
         .UseWindowsService(options =>
         {
@@ -53,6 +56,11 @@ try
             services.AddSingleton<HanaService>();
             services.AddSingleton<SapServiceLayerService>();
             services.AddSingleton<EmailService>();
+
+            services.AddSingleton<MovimientoHanaService>();
+            services.AddSingleton<MovimientoPdfService>();
+            services.AddSingleton<MovimientoEmailService>();
+
             services.AddHostedService<Worker>();
         })
         .Build();
