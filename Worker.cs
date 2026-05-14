@@ -88,6 +88,7 @@ namespace DocumentosElectronicos
                     await EjecutarProcesoAsync(stoppingToken);
                 else
                     await EjecutarMovimientoDiarioAsync(stoppingToken);
+
             }
 
             _logger.LogInformation("Servicio detenido.");
@@ -264,7 +265,7 @@ namespace DocumentosElectronicos
             }
 
             // Fallback: esperar 1 hora y recalcular (no debería llegar aquí)
-            _logger.LogWarning("CalcularProximaEjecucion: no se encontró horario futuro. Esperando 1 hora.");
+            _logger.LogWarning("Calcular Proxima Ejecucion: no se encontró horario futuro. Esperando 1 hora.");
             return (TimeSpan.FromHours(1), TipoEjecucion.DocumentosElectronicos);
         }
     }

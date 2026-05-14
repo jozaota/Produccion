@@ -19,6 +19,8 @@ var logsPath = Path.Combine(logsDir, "log-.txt");
 
 Directory.CreateDirectory(logsDir); // no lanza excepción si ya existe
 
+Console.WriteLine($"BaseDirectory: {AppContext.BaseDirectory}");
+
 Log.Logger = new LoggerConfiguration()
     .MinimumLevel.Information()
     .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
@@ -69,6 +71,7 @@ try
 }
 catch (Exception ex)
 {
+    Console.WriteLine($"FATAL: {ex}");
     Log.Fatal(ex, "El servicio terminó de forma inesperada.");
 }
 finally

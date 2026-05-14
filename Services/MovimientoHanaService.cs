@@ -30,6 +30,7 @@ namespace DocumentosElectronicos.Services
         public async Task<MovimientoReporte> ObtenerReporteAsync()
         {
             var hoy = DateTime.Today;
+            //var hoy = DateTime.Today.AddDays(-1);
             var antAnio = hoy.AddYears(-1);
 
             var reporte = new MovimientoReporte
@@ -80,7 +81,7 @@ namespace DocumentosElectronicos.Services
         {
             var result = new List<VentaItem>();
 
-            await using var conn = new HanaConnection(BuildConnString(empresa));
+            await using var conn = new HanaConnection(BuildConnString());
             await conn.OpenAsync();
 
             // Los SP en HANA se llaman con el schema como prefijo
@@ -117,7 +118,7 @@ namespace DocumentosElectronicos.Services
         {
             var result = new List<CobroItem>();
 
-            await using var conn = new HanaConnection(BuildConnString(empresa));
+            await using var conn = new HanaConnection(BuildConnString());
             await conn.OpenAsync();
 
             await using var cmd = conn.CreateCommand();
@@ -147,8 +148,10 @@ namespace DocumentosElectronicos.Services
         // Helpers
         // ─────────────────────────────────────────────────────────────────────
 
-        private string BuildConnString(EmpresaSapConfig e)
-            => $"Server={_settings.HanaServer};UserName={e.Usuario};Password={e.Password};CurrentSchema={e.CompanyDb}";
+        private string BuildConnString()
+            => $"Server={_settings.HanaServer};" +
+               $"UserID={_settings.HanaUsuario};" +
+               $"Password={_settings.HanaPassword};";
 
         private static string SafeString(DbDataReader r, string col) => r.IsDBNull(r.GetOrdinal(col)) ? "" : r.GetString(r.GetOrdinal(col));
         private static decimal SafeDecimal(DbDataReader r, string col) => r.IsDBNull(r.GetOrdinal(col)) ? 0m : Convert.ToDecimal(r.GetValue(r.GetOrdinal(col)));
