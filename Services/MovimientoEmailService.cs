@@ -50,7 +50,7 @@ namespace DocumentosElectronicos.Services
             foreach (var dest in _settings.DestinatariosMovimiento)
                 mensaje.To.Add(MailboxAddress.Parse(dest));
 
-            var fechaStr = reporte.Fecha.ToString("dd/MM/yyyy");
+            var fechaStr = $"{reporte.FechaDesde:dd/MM/yyyy} al {reporte.FechaHasta:dd/MM/yyyy}";
             mensaje.Subject = $"Movimiento Diario — {fechaStr}";
 
             // ── Cuerpo HTML ──────────────────────────────────────────────────
@@ -58,7 +58,7 @@ namespace DocumentosElectronicos.Services
             builder.HtmlBody = GenerarHtml(reporte);
 
             // ── PDF adjunto ──────────────────────────────────────────────────
-            var nombrePdf = $"MovimientoDiario_{reporte.Fecha:yyyyMMdd}.pdf";
+            var nombrePdf = $"MovimientoDiario_{reporte.FechaDesde:yyyyMMdd}_{reporte.FechaHasta:yyyyMMdd}.pdf";
             builder.Attachments.Add(nombrePdf, pdfBytes, new ContentType("application", "pdf"));
 
             mensaje.Body = builder.ToMessageBody();
@@ -81,9 +81,10 @@ namespace DocumentosElectronicos.Services
         private string GenerarHtml(MovimientoReporte reporte)
         {
             var sb = new StringBuilder();
-            var fechaHoy = reporte.Fecha.ToString("dddd, dd 'de' MMMM 'de' yyyy", new CultureInfo("es-PY"));
-            var añoHoy = reporte.Fecha.Year;
-            var añoAnt = reporte.FechaAnterior.Year;
+            var fechaHoy = $"{reporte.FechaDesde:dd/MM/yyyy} al {reporte.FechaHasta.ToString("dd 'de' MMMM 'de' yyyy", new CultureInfo("es-PY"))}";
+            var periodoAnt = $"{reporte.FechaDesdeAnt:dd/MM/yyyy} al {reporte.FechaHastaAnt:dd/MM/yyyy}";
+            var añoHoy = reporte.FechaHasta.Year;
+            var añoAnt = reporte.FechaHastaAnt.Year;
 
             sb.Append($@"
 <!DOCTYPE html>
@@ -147,8 +148,7 @@ namespace DocumentosElectronicos.Services
   <div class='hdr'>
     <div class='hdr-left'>
       <h1>Movimiento Diario</h1>
-      <p>{fechaHoy} &middot; Sistema de Movimientos</p>
-    </div>
+      <p>{fechaHoy} &middot; Sistema de Movimientos</p>    </div>
     <div class='hdr-logo'>
       <span class='im'>im</span><span class='pack'>pack</span><span class='ta'>ta</span>
     </div>
@@ -160,12 +160,12 @@ namespace DocumentosElectronicos.Services
 
     <!-- CARDS RESUMEN GLOBAL -->
     <div class='cards'>
-      {CardResumen("ventas", "Total Ventas", reporte.TotalVentasHoy, reporte.TotalVentasAnt, reporte.VariacionVentas, añoHoy, añoAnt)}
-      {CardResumen("cobros", "Total Cobranzas", reporte.TotalCobrosHoy, reporte.TotalCobrosAnt, reporte.VariacionCobros, añoHoy, añoAnt)}
+      {CardResumen("ventas", "Total Ventas", reporte.TotalVentasHoy, reporte.TotalVentasAnt, reporte.VariacionVentas, añoHoy, añoAnt, periodoAnt)}
+      {CardResumen("cobros", "Total Cobranzas", reporte.TotalCobrosHoy, reporte.TotalCobrosAnt, reporte.VariacionCobros, añoHoy, añoAnt, periodoAnt)}
     </div>
 
     <!-- DETALLE POR EMPRESA -->
-    {DetalleEmpresas(reporte, añoHoy, añoAnt)}
+    {DetalleEmpresas(reporte, añoHoy, añoAnt, periodoAnt)}
 
     <!-- NOTA -->
     <div class='nota'>
@@ -192,7 +192,7 @@ namespace DocumentosElectronicos.Services
         // Helpers HTML
         // ─────────────────────────────────────────────────────────────────────
 
-        private string CardResumen(string tipo, string label, decimal hoy, decimal ant, decimal var, int añoHoy, int añoAnt)
+        private string CardResumen(string tipo, string label, decimal hoy, decimal ant, decimal var, int añoHoy, int añoAnt, string periodoAnt)
         {
             var varClass = var >= 0 ? "pos" : "neg";
             var varSig = var >= 0 ? $"▲ +{var}%" : $"▼ {var}%";
@@ -201,12 +201,12 @@ namespace DocumentosElectronicos.Services
 <div class='card {tipo}'>
   <div class='card-label'>{label}</div>
   <div class='card-hoy'>Gs. {Gs(hoy)}</div>
-  <div class='card-ant'>{añoAnt}: Gs. {Gs(ant)}</div>
+  <div class='card-ant'>{periodoAnt}: Gs. {Gs(ant)}</div>
   <span class='card-var {varClass}'>{varSig} vs {añoAnt}</span>
 </div>";
         }
 
-        private string DetalleEmpresas(MovimientoReporte reporte, int añoHoy, int añoAnt)
+        private string DetalleEmpresas(MovimientoReporte reporte, int añoHoy, int añoAnt, string periodoAnt)
         {
             var sb = new StringBuilder();
 
@@ -225,7 +225,7 @@ namespace DocumentosElectronicos.Services
 
                 sb.Append($@"
   <tr class='total'><td>Total {añoHoy}</td><td class='r'>Gs. {Gs(empresa.TotalVentasHoy)}</td></tr>
-  <tr class='total-ant'><td>Total {añoAnt}</td><td class='r'>Gs. {Gs(empresa.TotalVentasAnt)}</td></tr>
+  <tr class='total-ant'><td>{periodoAnt}</td><td class='r'>Gs. {Gs(empresa.TotalVentasAnt)}</td></tr>
 </table>");
 
                 // Subtabla cobranzas
@@ -239,7 +239,7 @@ namespace DocumentosElectronicos.Services
 
                 sb.Append($@"
   <tr class='total'><td>Total {añoHoy}</td><td class='r'>Gs. {Gs(empresa.TotalCobrosHoy)}</td></tr>
-  <tr class='total-ant'><td>Total {añoAnt}</td><td class='r'>Gs. {Gs(empresa.TotalCobrosAnt)}</td></tr>
+  <tr class='total-ant'><td>{periodoAnt}</td><td class='r'>Gs. {Gs(empresa.TotalCobrosAnt)}</td></tr>
 </table>");
             }
 

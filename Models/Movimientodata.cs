@@ -93,20 +93,24 @@ namespace DocumentoElectronico.Models
     }
 
     // ── Reporte consolidado de todas las empresas ─────────────────────────────
+    // VERSIÓN NUEVA
     public class MovimientoReporte
     {
-        public DateTime Fecha { get; set; }
-        public DateTime FechaAnterior { get; set; }
+        // Rango actual: 1ro del mes → hoy
+        public DateTime FechaDesde { get; set; }
+        public DateTime FechaHasta { get; set; }
+
+        // Rango año anterior: 1ro del mes año ant → mismo día año ant
+        public DateTime FechaDesdeAnt { get; set; }
+        public DateTime FechaHastaAnt { get; set; }
 
         public List<MovimientoEmpresa> Empresas { get; set; } = new();
 
-        // Totales globales
         public decimal TotalVentasHoy => Empresas.Sum(e => e.TotalVentasHoy);
         public decimal TotalVentasAnt => Empresas.Sum(e => e.TotalVentasAnt);
         public decimal TotalCobrosHoy => Empresas.Sum(e => e.TotalCobrosHoy);
         public decimal TotalCobrosAnt => Empresas.Sum(e => e.TotalCobrosAnt);
 
-        // Variaciones porcentuales
         public decimal VariacionVentas =>
             TotalVentasAnt == 0 ? 0 : Math.Round((TotalVentasHoy - TotalVentasAnt) / TotalVentasAnt * 100, 1);
 

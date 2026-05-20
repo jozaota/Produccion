@@ -29,14 +29,18 @@ namespace DocumentosElectronicos.Services
 
         public async Task<MovimientoReporte> ObtenerReporteAsync()
         {
-            var hoy = DateTime.Today;
-            //var hoy = DateTime.Today.AddDays(-1);
-            var antAnio = hoy.AddYears(-1);
+            var hasta = DateTime.Today;
+            var desde = new DateTime(hasta.Year, hasta.Month, 1); // 1ro del mes actual
+
+            var hastaAnt = hasta.AddYears(-1);
+            var desdeAnt = new DateTime(hastaAnt.Year, hastaAnt.Month, 1); // 1ro del mes del año anterior
 
             var reporte = new MovimientoReporte
             {
-                Fecha = hoy,
-                FechaAnterior = antAnio
+                FechaDesde = desde,
+                FechaHasta = hasta,
+                FechaDesdeAnt = desdeAnt,
+                FechaHastaAnt = hastaAnt
             };
 
             foreach (var kv in _settings.Empresas.OrderBy(e => e.Key))
@@ -48,17 +52,18 @@ namespace DocumentosElectronicos.Services
 
                 try
                 {
-                    // Hoy
-                    movEmpresa.VentasHoy = await ObtenerVentasAsync(empresa, hoy);
-                    movEmpresa.CobrosHoy = await ObtenerCobrosAsync(empresa, hoy);
+                    // Rango actual: 1ro del mes → hoy
+                    movEmpresa.VentasHoy = await ObtenerVentasAsync(empresa, desde, hasta);
+                    movEmpresa.CobrosHoy = await ObtenerCobrosAsync(empresa, desde, hasta);
 
-                    // Misma fecha hace 1 año
-                    movEmpresa.VentasAnt = await ObtenerVentasAsync(empresa, antAnio);
-                    movEmpresa.CobrosAnt = await ObtenerCobrosAsync(empresa, antAnio);
+                    // Rango año anterior: 1ro del mes → mismo día del año pasado
+                    movEmpresa.VentasAnt = await ObtenerVentasAsync(empresa, desdeAnt, hastaAnt);
+                    movEmpresa.CobrosAnt = await ObtenerCobrosAsync(empresa, desdeAnt, hastaAnt);
 
                     _logger.LogInformation(
-                        "{Empresa} → Ventas hoy: {VH:N0} | Ventas ant: {VA:N0} | Cobros hoy: {CH:N0} | Cobros ant: {CA:N0}",
+                        "{Empresa} [{Desde:dd/MM} - {Hasta:dd/MM}] → Ventas: {VH:N0} | Ant: {VA:N0} | Cobros: {CH:N0} | Ant: {CA:N0}",
                         empresa.Nombre,
+                        desde, hasta,
                         movEmpresa.TotalVentasHoy, movEmpresa.TotalVentasAnt,
                         movEmpresa.TotalCobrosHoy, movEmpresa.TotalCobrosAnt);
                 }
@@ -77,18 +82,18 @@ namespace DocumentosElectronicos.Services
         // Ventas_RealizadasV2
         // ─────────────────────────────────────────────────────────────────────
 
-        private async Task<List<VentaItem>> ObtenerVentasAsync(EmpresaSapConfig empresa, DateTime fecha)
+        private async Task<List<VentaItem>> ObtenerVentasAsync(EmpresaSapConfig empresa, DateTime fechadesde, DateTime fechahasta)
         {
             var result = new List<VentaItem>();
 
             await using var conn = new HanaConnection(BuildConnString());
             await conn.OpenAsync();
 
-            // Los SP en HANA se llaman con el schema como prefijo
             await using var cmd = conn.CreateCommand();
             cmd.CommandText = $"\"{empresa.CompanyDb}\".\"Ventas_RealizadasV2\"";
             cmd.CommandType = CommandType.StoredProcedure;
-            cmd.Parameters.Add(new HanaParameter("fecha", HanaDbType.Date) { Value = fecha.Date });
+            cmd.Parameters.Add(new HanaParameter("fechadesde", HanaDbType.Date) { Value = fechadesde.Date });
+            cmd.Parameters.Add(new HanaParameter("fechahasta", HanaDbType.Date) { Value = fechahasta.Date });
 
             await using var reader = await cmd.ExecuteReaderAsync();
             while (await reader.ReadAsync())
@@ -114,7 +119,7 @@ namespace DocumentosElectronicos.Services
         // Cobros_RealizadosV2
         // ─────────────────────────────────────────────────────────────────────
 
-        private async Task<List<CobroItem>> ObtenerCobrosAsync(EmpresaSapConfig empresa, DateTime fecha)
+        private async Task<List<CobroItem>> ObtenerCobrosAsync(EmpresaSapConfig empresa, DateTime fechadesde, DateTime fechahasta)
         {
             var result = new List<CobroItem>();
 
@@ -124,7 +129,8 @@ namespace DocumentosElectronicos.Services
             await using var cmd = conn.CreateCommand();
             cmd.CommandText = $"\"{empresa.CompanyDb}\".\"Cobros_RealizadosV2\"";
             cmd.CommandType = CommandType.StoredProcedure;
-            cmd.Parameters.Add(new HanaParameter("fecha", HanaDbType.Date) { Value = fecha.Date });
+            cmd.Parameters.Add(new HanaParameter("fechadesde", HanaDbType.Date) { Value = fechadesde.Date });
+            cmd.Parameters.Add(new HanaParameter("fechahasta", HanaDbType.Date) { Value = fechahasta.Date });
 
             await using var reader = await cmd.ExecuteReaderAsync();
             while (await reader.ReadAsync())

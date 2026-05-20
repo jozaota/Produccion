@@ -43,9 +43,13 @@ namespace DocumentosElectronicos.Services
                         col.Item().PaddingTop(8).Text(t =>
                         {
                             t.Span("Fecha: ").Bold();
-                            t.Span(reporte.Fecha.ToString("dd/MM/yyyy"));
+                            t.Span(reporte.FechaDesde.ToString("dd/MM/yyyy"));
+                            t.Span(" al ").Bold();
+                            t.Span(reporte.FechaHasta.ToString("dd/MM/yyyy"));
                             t.Span("     Comparativo con: ").Bold();
-                            t.Span(reporte.FechaAnterior.ToString("dd/MM/yyyy"));
+                            t.Span(reporte.FechaDesdeAnt.ToString("dd/MM/yyyy"));
+                            t.Span(" al ").Bold();
+                            t.Span(reporte.FechaHastaAnt.ToString("dd/MM/yyyy"));
                         });
 
                         // ── Resumen global ────────────────────────────────────────────────
@@ -236,7 +240,7 @@ namespace DocumentosElectronicos.Services
                 // Fila Total año actual
                 table.Cell().Background(ColorGrisClaro).Padding(4)
                     .DefaultTextStyle(t => t.Bold().FontSize(8))
-                    .Text($"Total general: {reporte.Fecha.Year}");
+                    .Text($"Total general: {reporte.FechaHasta.Year}");
                 table.Cell().Background(ColorGrisClaro).Padding(4).AlignRight()
                     .DefaultTextStyle(t => t.Bold().FontSize(8))
                     .Text(Gs(empresa.TotalVentasHoy));
@@ -244,7 +248,7 @@ namespace DocumentosElectronicos.Services
                 // Fila Total año anterior
                 table.Cell().Background(ColorGrisClaro).Padding(4)
                     .DefaultTextStyle(t => t.FontSize(8).FontColor("#666666"))
-                    .Text($"Total general: {reporte.FechaAnterior.Year}");
+                    .Text($"Total general: {reporte.FechaHastaAnt.Year}");
                 table.Cell().Background(ColorGrisClaro).Padding(4).AlignRight()
                     .DefaultTextStyle(t => t.FontSize(8).FontColor("#666666"))
                     .Text(Gs(empresa.TotalVentasAnt));
@@ -288,14 +292,14 @@ namespace DocumentosElectronicos.Services
 
                 table.Cell().Background(ColorGrisClaro).Padding(4)
                     .DefaultTextStyle(t => t.Bold().FontSize(8))
-                    .Text($"Total general: {reporte.Fecha.Year}");
+                    .Text($"Total general: {reporte.FechaHasta.Year}");
                 table.Cell().Background(ColorGrisClaro).Padding(4).AlignRight()
                     .DefaultTextStyle(t => t.Bold().FontSize(8))
                     .Text(Gs(empresa.TotalCobrosHoy));
 
                 table.Cell().Background(ColorGrisClaro).Padding(4)
                     .DefaultTextStyle(t => t.FontSize(8).FontColor("#666666"))
-                    .Text($"Total general: {reporte.FechaAnterior.Year}");
+                    .Text($"Total general: {reporte.FechaHastaAnt.Year}");
                 table.Cell().Background(ColorGrisClaro).Padding(4).AlignRight()
                     .DefaultTextStyle(t => t.FontSize(8).FontColor("#666666"))
                     .Text(Gs(empresa.TotalCobrosAnt));
