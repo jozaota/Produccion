@@ -111,7 +111,11 @@ namespace DocumentosElectronicos
                 _logger.LogInformation("{Count} documentos cancelados obtenidos.", cancelados.Count);
 
                 // 2. Procesar por empresa
-                var empresaIds = _settings.Empresas.Keys.OrderBy(id => id).ToList();
+                //var empresaIds = _settings.Empresas.Keys.OrderBy(id => id).ToList();
+                var empresaIds = _settings.Empresas.Keys
+                                    .Where(id => id != 3)
+                                    .OrderBy(id => id)
+                                    .ToList();
 
                 foreach (var empresaId in empresaIds)
                 {

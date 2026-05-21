@@ -32,7 +32,7 @@ namespace DocumentosElectronicos
 
         // NUEVAS:
         public List<string> DestinatariosMovimiento { get; set; } = new();
-        public string HorarioMovimientoSemana { get; set; } = "17:00";  // Lun–Vie
+        public string HorarioMovimientoSemana { get; set; } = "11:00";  // Lun–Vie
         public string HorarioMovimientoSabado { get; set; } = "12:00";  // Sáb
     }
 

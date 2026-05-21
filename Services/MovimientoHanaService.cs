@@ -29,11 +29,18 @@ namespace DocumentosElectronicos.Services
 
         public async Task<MovimientoReporte> ObtenerReporteAsync()
         {
-            var hasta = DateTime.Today;
-            var desde = new DateTime(hasta.Year, hasta.Month, 1); // 1ro del mes actual
+            // Sábado → fecha hasta = hoy | Lun-Vie → fecha hasta = ayer
+            var esSabado = DateTime.Today.DayOfWeek == DayOfWeek.Saturday;
+            var hasta = esSabado ? DateTime.Today : DateTime.Today.AddDays(-1);
+            var desde = new DateTime(hasta.Year, hasta.Month, 1);
 
             var hastaAnt = hasta.AddYears(-1);
-            var desdeAnt = new DateTime(hastaAnt.Year, hastaAnt.Month, 1); // 1ro del mes del año anterior
+            var desdeAnt = new DateTime(hastaAnt.Year, hastaAnt.Month, 1);
+            //var hasta = DateTime.Today.AddDays(-1);
+            //var desde = new DateTime(hasta.Year, hasta.Month, 1); // 1ro del mes actual
+
+            //var hastaAnt = hasta.AddYears(-1);
+            //var desdeAnt = new DateTime(hastaAnt.Year, hastaAnt.Month, 1); // 1ro del mes del año anterior
 
             var reporte = new MovimientoReporte
             {
@@ -84,16 +91,22 @@ namespace DocumentosElectronicos.Services
 
         private async Task<List<VentaItem>> ObtenerVentasAsync(EmpresaSapConfig empresa, DateTime fechadesde, DateTime fechahasta)
         {
-            var result = new List<VentaItem>();
+             var result = new List<VentaItem>();
 
             await using var conn = new HanaConnection(BuildConnString());
             await conn.OpenAsync();
 
             await using var cmd = conn.CreateCommand();
-            cmd.CommandText = $"\"{empresa.CompanyDb}\".\"Ventas_RealizadasV2\"";
+            //cmd.CommandText = $"CALL \"{empresa.CompanyDb}\".\"Ventas_RealizadasV2\"";
             cmd.CommandType = CommandType.StoredProcedure;
-            cmd.Parameters.Add(new HanaParameter("fechadesde", HanaDbType.Date) { Value = fechadesde.Date });
-            cmd.Parameters.Add(new HanaParameter("fechahasta", HanaDbType.Date) { Value = fechahasta.Date });
+            cmd.CommandText = $"\"{empresa.CompanyDb}\".\"Ventas_RealizadasV2\"";
+            //cmd.Parameters.Add(new HanaParameter("p1", HanaDbType.Date) { Value = fechadesde.Date });
+            //cmd.Parameters.Add(new HanaParameter("p2", HanaDbType.Date) { Value = fechahasta.Date });
+            var p1v = new HanaParameter { HanaDbType = HanaDbType.Date, Value = fechadesde.Date };
+            var p2v = new HanaParameter { HanaDbType = HanaDbType.Date, Value = fechahasta.Date };
+            cmd.Parameters.Add(p1v);
+            cmd.Parameters.Add(p2v);
+
 
             await using var reader = await cmd.ExecuteReaderAsync();
             while (await reader.ReadAsync())
@@ -127,10 +140,14 @@ namespace DocumentosElectronicos.Services
             await conn.OpenAsync();
 
             await using var cmd = conn.CreateCommand();
-            cmd.CommandText = $"\"{empresa.CompanyDb}\".\"Cobros_RealizadosV2\"";
             cmd.CommandType = CommandType.StoredProcedure;
-            cmd.Parameters.Add(new HanaParameter("fechadesde", HanaDbType.Date) { Value = fechadesde.Date });
-            cmd.Parameters.Add(new HanaParameter("fechahasta", HanaDbType.Date) { Value = fechahasta.Date });
+            cmd.CommandText = $"\"{empresa.CompanyDb}\".\"Cobros_RealizadosV2\"";
+            //cmd.Parameters.Add(new HanaParameter("p1", HanaDbType.Date) { Value = fechadesde.Date });
+            //cmd.Parameters.Add(new HanaParameter("p2", HanaDbType.Date) { Value = fechahasta.Date });
+            var p1c = new HanaParameter { HanaDbType = HanaDbType.Date, Value = fechadesde.Date };
+            var p2c = new HanaParameter { HanaDbType = HanaDbType.Date, Value = fechahasta.Date };
+            cmd.Parameters.Add(p1c);
+            cmd.Parameters.Add(p2c);
 
             await using var reader = await cmd.ExecuteReaderAsync();
             while (await reader.ReadAsync())
