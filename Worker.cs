@@ -13,7 +13,8 @@ namespace DocumentosElectronicos
         private enum TipoEjecucion
         {
             DocumentosElectronicos,
-            MovimientoDiario
+            MovimientoDiario,
+            OrdenFabricacion
         }
 
         private readonly ILogger<Worker> _logger;
@@ -27,6 +28,10 @@ namespace DocumentosElectronicos
         private readonly MovimientoHanaService _movimientoHana;
         private readonly MovimientoEmailService _movimientoEmail;
 
+        // ── NUEVO: Estado de Orden de Fabricación ───────────────────────────────
+        private readonly OrdenFabricacionHanaService _ofHana;
+        private readonly OrdenFabricacionEmailService _ofEmail;
+
         // Horarios existentes
         private TimeSpan _horarioMañana;
         private TimeSpan _horarioTarde;
@@ -34,6 +39,9 @@ namespace DocumentosElectronicos
         // Horarios nuevos: Movimiento Diario
         private TimeSpan _horarioMovSemana;   // Lun–Vie
         private TimeSpan _horarioMovSabado;   // Sáb
+
+        // Horario nuevo: Estado de Orden de Fabricación
+        private TimeSpan _horarioOF;          // Vie
 
         public Worker(
             ILogger<Worker> logger,
@@ -44,7 +52,10 @@ namespace DocumentosElectronicos
             EmailService emailService,
             // ── NUEVO ──────────────────────────────────────────────────────
             MovimientoHanaService movimientoHana,
-            MovimientoEmailService movimientoEmail)
+            MovimientoEmailService movimientoEmail,
+            // ── NUEVO: Estado de Orden de Fabricación ────────────────────────
+            OrdenFabricacionHanaService ofHana,
+            OrdenFabricacionEmailService ofEmail)
         {
             _logger = logger;
             _settings = settings.Value;
@@ -54,11 +65,14 @@ namespace DocumentosElectronicos
             _emailService = emailService;
             _movimientoHana = movimientoHana;
             _movimientoEmail = movimientoEmail;
+            _ofHana = ofHana;
+            _ofEmail = ofEmail;
 
             _horarioMañana = TimeSpan.Parse(_settings.HorarioMañana);
             _horarioTarde = TimeSpan.Parse(_settings.HorarioTarde);
             _horarioMovSemana = TimeSpan.Parse(_settings.HorarioMovimientoSemana);
             _horarioMovSabado = TimeSpan.Parse(_settings.HorarioMovimientoSabado);
+            _horarioOF = TimeSpan.Parse(_settings.HorarioOF);
         }
 
         // ─────────────────────────────────────────────────────────────────────
@@ -68,8 +82,8 @@ namespace DocumentosElectronicos
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
             _logger.LogInformation(
-                "Servicio iniciado. DocElect: {M} y {T}. MovDiario: Lun-Vie {S}, Sáb {Sa}.",
-                _horarioMañana, _horarioTarde, _horarioMovSemana, _horarioMovSabado);
+                "Servicio iniciado. DocElect: {M} y {T}. MovDiario: Lun-Vie {S}, Sáb {Sa}. EstadoOF: Vie {Of}.",
+                _horarioMañana, _horarioTarde, _horarioMovSemana, _horarioMovSabado, _horarioOF);
 
             while (!stoppingToken.IsCancellationRequested)
             {
@@ -84,11 +98,18 @@ namespace DocumentosElectronicos
 
                 if (stoppingToken.IsCancellationRequested) break;
 
-                if (tipo == TipoEjecucion.DocumentosElectronicos)
-                    await EjecutarProcesoAsync(stoppingToken);
-                else
-                    await EjecutarMovimientoDiarioAsync(stoppingToken);
-
+                switch (tipo)
+                {
+                    case TipoEjecucion.DocumentosElectronicos:
+                        await EjecutarProcesoAsync(stoppingToken);
+                        break;
+                    case TipoEjecucion.MovimientoDiario:
+                        await EjecutarMovimientoDiarioAsync(stoppingToken);
+                        break;
+                    case TipoEjecucion.OrdenFabricacion:
+                        await EjecutarOrdenFabricacionAsync(stoppingToken);
+                        break;
+                }
             }
 
             _logger.LogInformation("Servicio detenido.");
@@ -187,6 +208,34 @@ namespace DocumentosElectronicos
         }
 
         // ─────────────────────────────────────────────────────────────────────
+        // PROCESO NUEVO: Estado de Orden de Fabricación
+        // ─────────────────────────────────────────────────────────────────────
+
+        private async Task EjecutarOrdenFabricacionAsync(CancellationToken ct)
+        {
+            _logger.LogInformation("═══════ INICIO: Estado de Orden de Fabricación [{Hora}] ═══════",
+                DateTime.Now.ToString("HH:mm:ss"));
+
+            try
+            {
+                _logger.LogInformation("EstadoOF Paso 1: Consultando HANA (V_OF_General)...");
+                var reporte = await _ofHana.ObtenerReporteAsync();
+
+                foreach (var planta in reporte.Plantas)
+                    _logger.LogInformation("EstadoOF: {Planta} → {Count} OF.", planta.NombrePlanta, planta.Ordenes.Count);
+
+                _logger.LogInformation("EstadoOF Paso 2: Enviando mail con Excel adjunto...");
+                await _ofEmail.EnviarAsync(reporte);
+
+                _logger.LogInformation("═══════ ESTADO DE ORDEN DE FABRICACIÓN COMPLETADO ═══════");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error en proceso Estado de Orden de Fabricación.");
+            }
+        }
+
+        // ─────────────────────────────────────────────────────────────────────
         // PROCESAMIENTO POR EMPRESA (existente, sin cambios)
         // ─────────────────────────────────────────────────────────────────────
 
@@ -254,6 +303,16 @@ namespace DocumentosElectronicos
                     var h = dia == DayOfWeek.Saturday ? _horarioMovSabado : _horarioMovSemana;
                     candidatos.Add((fecha + h, TipoEjecucion.MovimientoDiario));
                 }
+
+                // Estado de Orden de Fabricación: todos los viernes...
+                if (dia == DayOfWeek.Friday)
+                    candidatos.Add((fecha + _horarioOF, TipoEjecucion.OrdenFabricacion));
+
+                // ...y también el último día del mes si no cae viernes
+                // (puede haber dos envíos esa semana: el del viernes y el de cierre de mes)
+                var esUltimoDiaDelMes = fecha.Day == DateTime.DaysInMonth(fecha.Year, fecha.Month);
+                if (esUltimoDiaDelMes && dia != DayOfWeek.Friday)
+                    candidatos.Add((fecha + _horarioOF, TipoEjecucion.OrdenFabricacion));
 
                 // Filtrar solo los futuros (con 1 seg de margen para evitar re-disparos)
                 var futuros = candidatos

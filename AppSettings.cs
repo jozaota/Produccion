@@ -34,6 +34,10 @@ namespace DocumentosElectronicos
         public List<string> DestinatariosMovimiento { get; set; } = new();
         public string HorarioMovimientoSemana { get; set; } = "11:00";  // Lun–Vie
         public string HorarioMovimientoSabado { get; set; } = "12:00";  // Sáb
+
+        // Estado de Orden de Fabricación (viernes)
+        public List<string> DestinatariosOF { get; set; } = new();
+        public string HorarioOF { get; set; } = "09:00";  // Vie
     }
 
     public class EmpresaSapConfig

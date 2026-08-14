@@ -63,6 +63,10 @@ try
             services.AddSingleton<MovimientoPdfService>();
             services.AddSingleton<MovimientoEmailService>();
 
+            services.AddSingleton<OrdenFabricacionHanaService>();
+            services.AddSingleton<OrdenFabricacionExcelService>();
+            services.AddSingleton<OrdenFabricacionEmailService>();
+
             services.AddHostedService<Worker>();
         })
         .Build();
