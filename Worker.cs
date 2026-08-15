@@ -109,6 +109,9 @@ namespace DocumentosElectronicos
                     case TipoEjecucion.OrdenFabricacion:
                         await EjecutarOrdenFabricacionAsync(stoppingToken);
                         break;
+                    case null:
+                        // No hay ningún horario configurado para hoy/mañana; no se ejecuta nada.
+                        break;
                 }
             }
 
@@ -283,7 +286,7 @@ namespace DocumentosElectronicos
         // SCHEDULER  — soporta múltiples horarios y tipos
         // ─────────────────────────────────────────────────────────────────────
 
-        private (TimeSpan Wait, TipoEjecucion Tipo) CalcularProximaEjecucion(DateTime ahora)
+        private (TimeSpan Wait, TipoEjecucion? Tipo) CalcularProximaEjecucion(DateTime ahora)
         {
             // Buscamos en el día de hoy y mañana hasta encontrar un candidato futuro
             for (int offset = 0; offset <= 1; offset++)
@@ -293,9 +296,12 @@ namespace DocumentosElectronicos
 
                 var candidatos = new List<(DateTime Cuando, TipoEjecucion Tipo)>();
 
-                // Documentos Electrónicos: todos los días, mañana y tarde
-                candidatos.Add((fecha + _horarioMañana, TipoEjecucion.DocumentosElectronicos));
-                candidatos.Add((fecha + _horarioTarde, TipoEjecucion.DocumentosElectronicos));
+                // Documentos Electrónicos: Lun–Sáb (no Domingo), mañana y tarde
+                if (dia != DayOfWeek.Sunday)
+                {
+                    candidatos.Add((fecha + _horarioMañana, TipoEjecucion.DocumentosElectronicos));
+                    candidatos.Add((fecha + _horarioTarde, TipoEjecucion.DocumentosElectronicos));
+                }
 
                 // Movimiento Diario: Lun–Sáb (no Domingo)
                 if (dia != DayOfWeek.Sunday)
@@ -327,9 +333,10 @@ namespace DocumentosElectronicos
                 }
             }
 
-            // Fallback: esperar 1 hora y recalcular (no debería llegar aquí)
-            _logger.LogWarning("Calcular Proxima Ejecucion: no se encontró horario futuro. Esperando 1 hora.");
-            return (TimeSpan.FromHours(1), TipoEjecucion.DocumentosElectronicos);
+            // Fallback: no hay ningún candidato hoy ni mañana (no debería llegar aquí).
+            // No se dispara ningún proceso; solo se espera y se vuelve a calcular.
+            _logger.LogWarning("Calcular Proxima Ejecucion: no se encontró horario futuro. Esperando 1 hora sin ejecutar nada.");
+            return (TimeSpan.FromHours(1), null);
         }
     }
 }
