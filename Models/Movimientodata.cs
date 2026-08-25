@@ -66,6 +66,12 @@ namespace DocumentoElectronico.Models
         public decimal TotalCobrosHoy => CobrosHoy.Sum(c => c.Total);
         public decimal TotalCobrosAnt => CobrosAnt.Sum(c => c.Total);
 
+        public decimal VariacionVentas =>
+            TotalVentasAnt == 0 ? 0 : Math.Round((TotalVentasHoy - TotalVentasAnt) / TotalVentasAnt * 100, 1);
+
+        public decimal VariacionCobros =>
+            TotalCobrosAnt == 0 ? 0 : Math.Round((TotalCobrosHoy - TotalCobrosAnt) / TotalCobrosAnt * 100, 1);
+
         // ── Agrupaciones para el PDF ──────────────────────────────────────────
         public IEnumerable<VentasPorVendedor> VentasHoyAgrupadas =>
             VentasHoy

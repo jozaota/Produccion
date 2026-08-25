@@ -252,6 +252,8 @@ namespace DocumentosElectronicos.Services
                 table.Cell().Background(ColorGrisClaro).Padding(4).AlignRight()
                     .DefaultTextStyle(t => t.FontSize(8).FontColor("#666666"))
                     .Text(Gs(empresa.TotalVentasAnt));
+
+                FilaVariacion(table, empresa.VariacionVentas, reporte.FechaHastaAnt.Year);
             });
         }
 
@@ -303,7 +305,25 @@ namespace DocumentosElectronicos.Services
                 table.Cell().Background(ColorGrisClaro).Padding(4).AlignRight()
                     .DefaultTextStyle(t => t.FontSize(8).FontColor("#666666"))
                     .Text(Gs(empresa.TotalCobrosAnt));
+
+                FilaVariacion(table, empresa.VariacionCobros, reporte.FechaHastaAnt.Year);
             });
+        }
+
+        // ─────────────────────────────────────────────────────────────────────
+        // FILA DE VARIACIÓN (compartida por Ventas y Cobranzas)
+        // ─────────────────────────────────────────────────────────────────────
+
+        private void FilaVariacion(TableDescriptor table, decimal variacion, int añoAnt)
+        {
+            table.Cell().ColumnSpan(2).PaddingTop(4).PaddingHorizontal(4).AlignRight()
+                .Text(t =>
+                {
+                    t.Span(variacion >= 0 ? $"▲ +{variacion}%" : $"▼ {variacion}%")
+                        .Bold().FontSize(8)
+                        .FontColor(variacion >= 0 ? "#1A7A1A" : ColorRojo);
+                    t.Span($" vs {añoAnt}").FontSize(7).FontColor("#666666");
+                });
         }
 
         // ─────────────────────────────────────────────────────────────────────

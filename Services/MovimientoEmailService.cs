@@ -132,6 +132,7 @@ namespace DocumentosElectronicos.Services
   tr:nth-child(even) td {{ background:#FAFAFA; }}
   tr.total td {{ background:#F5F5F5; font-weight:700; }}
   tr.total-ant td {{ background:#F5F5F5; color:#888888; font-size:11px; }}
+  tr.total-var td {{ background:#FFFFFF; border-bottom:none; padding:8px 10px 0; }}
 
   /* NOTA PDF */
   .nota   {{ background:#F5F5F5; border:1px solid #E0E0E0; border-radius:4px; padding:10px 14px; font-size:11px; color:#555555; margin-top:20px; }}
@@ -194,16 +195,20 @@ namespace DocumentosElectronicos.Services
 
         private string CardResumen(string tipo, string label, decimal hoy, decimal ant, decimal var, int añoHoy, int añoAnt, string periodoAnt)
         {
-            var varClass = var >= 0 ? "pos" : "neg";
-            var varSig = var >= 0 ? $"▲ +{var}%" : $"▼ {var}%";
-
             return $@"
 <div class='card {tipo}'>
   <div class='card-label'>{label}</div>
   <div class='card-hoy'>Gs. {Gs(hoy)}</div>
   <div class='card-ant'>{periodoAnt}: Gs. {Gs(ant)}</div>
-  <span class='card-var {varClass}'>{varSig} vs {añoAnt}</span>
+  {BadgeVariacion(var, añoAnt)}
 </div>";
+        }
+
+        private static string BadgeVariacion(decimal var, int añoAnt)
+        {
+            var varClass = var >= 0 ? "pos" : "neg";
+            var varSig = var >= 0 ? $"▲ +{var}%" : $"▼ {var}%";
+            return $"<span class='card-var {varClass}'>{varSig} vs {añoAnt}</span>";
         }
 
         private string DetalleEmpresas(MovimientoReporte reporte, int añoHoy, int añoAnt, string periodoAnt)
@@ -226,6 +231,7 @@ namespace DocumentosElectronicos.Services
                 sb.Append($@"
   <tr class='total'><td>Total {añoHoy}</td><td class='r'>Gs. {Gs(empresa.TotalVentasHoy)}</td></tr>
   <tr class='total-ant'><td>{periodoAnt}</td><td class='r'>Gs. {Gs(empresa.TotalVentasAnt)}</td></tr>
+  <tr class='total-var'><td colspan='2' class='r'>{BadgeVariacion(empresa.VariacionVentas, añoAnt)}</td></tr>
 </table>");
 
                 // Subtabla cobranzas
@@ -240,6 +246,7 @@ namespace DocumentosElectronicos.Services
                 sb.Append($@"
   <tr class='total'><td>Total {añoHoy}</td><td class='r'>Gs. {Gs(empresa.TotalCobrosHoy)}</td></tr>
   <tr class='total-ant'><td>{periodoAnt}</td><td class='r'>Gs. {Gs(empresa.TotalCobrosAnt)}</td></tr>
+  <tr class='total-var'><td colspan='2' class='r'>{BadgeVariacion(empresa.VariacionCobros, añoAnt)}</td></tr>
 </table>");
             }
 
