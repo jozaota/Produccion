@@ -210,8 +210,9 @@ namespace DocumentosElectronicos.Services
             {
                 table.ColumnsDefinition(c =>
                 {
-                    c.RelativeColumn(3); // Vendedor
-                    c.RelativeColumn(2); // Total Ventas
+                    c.RelativeColumn(3);   // Vendedor
+                    c.RelativeColumn(2);   // Total Ventas
+                    c.RelativeColumn(1.3f); // Variación
                 });
 
                 // Encabezado
@@ -223,17 +224,24 @@ namespace DocumentosElectronicos.Services
                     h.Cell().Background(ColorNegro).Padding(4).AlignRight()
                         .DefaultTextStyle(t => t.Bold().FontColor("#FFFFFF").FontSize(8))
                         .Text("Total Ventas");
+                    h.Cell().Background(ColorNegro).Padding(4).AlignRight()
+                        .DefaultTextStyle(t => t.Bold().FontColor("#FFFFFF").FontSize(8))
+                        .Text("Var. %");
                 });
 
-                // Filas agrupadas por vendedor (hoy)
+                // Filas agrupadas por vendedor, con variación hoy vs año anterior
                 bool par = false;
-                foreach (var v in empresa.VentasHoyAgrupadas)
+                foreach (var v in empresa.VentasPorVendedorConVariacion)
                 {
                     var bg = par ? ColorBlancoRoto : "#FFFFFF";
                     table.Cell().Background(bg).Padding(4)
                         .DefaultTextStyle(t => t.FontSize(8)).Text(v.CodVen);
                     table.Cell().Background(bg).Padding(4).AlignRight()
-                        .DefaultTextStyle(t => t.FontSize(8)).Text(Gs(v.Total));
+                        .DefaultTextStyle(t => t.FontSize(8)).Text(Gs(v.TotalHoy));
+                    table.Cell().Background(bg).Padding(4).AlignRight()
+                        .Text(t => t.Span(v.Variacion >= 0 ? $"▲ +{v.Variacion}%" : $"▼ {v.Variacion}%")
+                            .FontSize(8).Bold()
+                            .FontColor(v.Variacion >= 0 ? "#1A7A1A" : ColorRojo));
                     par = !par;
                 }
 
@@ -244,6 +252,7 @@ namespace DocumentosElectronicos.Services
                 table.Cell().Background(ColorGrisClaro).Padding(4).AlignRight()
                     .DefaultTextStyle(t => t.Bold().FontSize(8))
                     .Text(Gs(empresa.TotalVentasHoy));
+                table.Cell().Background(ColorGrisClaro).Padding(4);
 
                 // Fila Total año anterior
                 table.Cell().Background(ColorGrisClaro).Padding(4)
@@ -252,8 +261,9 @@ namespace DocumentosElectronicos.Services
                 table.Cell().Background(ColorGrisClaro).Padding(4).AlignRight()
                     .DefaultTextStyle(t => t.FontSize(8).FontColor("#666666"))
                     .Text(Gs(empresa.TotalVentasAnt));
+                table.Cell().Background(ColorGrisClaro).Padding(4);
 
-                FilaVariacion(table, empresa.VariacionVentas, reporte.FechaHastaAnt.Year);
+                FilaVariacion(table, empresa.VariacionVentas, reporte.FechaHastaAnt.Year, columnas: 3);
             });
         }
 
@@ -306,7 +316,7 @@ namespace DocumentosElectronicos.Services
                     .DefaultTextStyle(t => t.FontSize(8).FontColor("#666666"))
                     .Text(Gs(empresa.TotalCobrosAnt));
 
-                FilaVariacion(table, empresa.VariacionCobros, reporte.FechaHastaAnt.Year);
+                FilaVariacion(table, empresa.VariacionCobros, reporte.FechaHastaAnt.Year, columnas: 2);
             });
         }
 
@@ -314,9 +324,9 @@ namespace DocumentosElectronicos.Services
         // FILA DE VARIACIÓN (compartida por Ventas y Cobranzas)
         // ─────────────────────────────────────────────────────────────────────
 
-        private void FilaVariacion(TableDescriptor table, decimal variacion, int añoAnt)
+        private void FilaVariacion(TableDescriptor table, decimal variacion, int añoAnt, int columnas)
         {
-            table.Cell().ColumnSpan(2).PaddingTop(4).PaddingHorizontal(4).AlignRight()
+            table.Cell().ColumnSpan((uint)columnas).PaddingTop(4).PaddingHorizontal(4).AlignRight()
                 .Text(t =>
                 {
                     t.Span(variacion >= 0 ? $"▲ +{variacion}%" : $"▼ {variacion}%")

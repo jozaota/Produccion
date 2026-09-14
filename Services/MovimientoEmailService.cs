@@ -211,6 +211,14 @@ namespace DocumentosElectronicos.Services
             return $"<span class='card-var {varClass}'>{varSig} vs {añoAnt}</span>";
         }
 
+        // Variante compacta (sin "vs año"), para usar en una celda por fila
+        private static string BadgeVariacionCompacta(decimal var)
+        {
+            var varClass = var >= 0 ? "pos" : "neg";
+            var varSig = var >= 0 ? $"▲ +{var}%" : $"▼ {var}%";
+            return $"<span class='card-var {varClass}'>{varSig}</span>";
+        }
+
         private string DetalleEmpresas(MovimientoReporte reporte, int añoHoy, int añoAnt, string periodoAnt)
         {
             var sb = new StringBuilder();
@@ -223,15 +231,15 @@ namespace DocumentosElectronicos.Services
                 sb.Append(@"
 <p style='font-size:10px;font-weight:700;margin:4px 0 4px;'>VENTAS</p>
 <table>
-  <tr><th>Vendedor</th><th class='r'>Total Ventas</th></tr>");
+  <tr><th>Vendedor</th><th class='r'>Total Ventas</th><th class='r'>Var. %</th></tr>");
 
-                foreach (var v in empresa.VentasHoyAgrupadas)
-                    sb.Append($"<tr><td>{v.CodVen}</td><td class='r'>Gs. {Gs(v.Total)}</td></tr>");
+                foreach (var v in empresa.VentasPorVendedorConVariacion)
+                    sb.Append($"<tr><td>{v.CodVen}</td><td class='r'>Gs. {Gs(v.TotalHoy)}</td><td class='r'>{BadgeVariacionCompacta(v.Variacion)}</td></tr>");
 
                 sb.Append($@"
-  <tr class='total'><td>Total {añoHoy}</td><td class='r'>Gs. {Gs(empresa.TotalVentasHoy)}</td></tr>
-  <tr class='total-ant'><td>{periodoAnt}</td><td class='r'>Gs. {Gs(empresa.TotalVentasAnt)}</td></tr>
-  <tr class='total-var'><td colspan='2' class='r'>{BadgeVariacion(empresa.VariacionVentas, añoAnt)}</td></tr>
+  <tr class='total'><td>Total {añoHoy}</td><td class='r'>Gs. {Gs(empresa.TotalVentasHoy)}</td><td class='r'></td></tr>
+  <tr class='total-ant'><td>{periodoAnt}</td><td class='r'>Gs. {Gs(empresa.TotalVentasAnt)}</td><td class='r'></td></tr>
+  <tr class='total-var'><td colspan='3' class='r'>{BadgeVariacion(empresa.VariacionVentas, añoAnt)}</td></tr>
 </table>");
 
                 // Subtabla cobranzas

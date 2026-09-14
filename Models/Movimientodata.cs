@@ -41,6 +41,17 @@ namespace DocumentoElectronico.Models
         public decimal Total { get; set; }
     }
 
+    // ── Ventas por vendedor comparadas hoy vs año anterior (mismo período) ────
+    public class VentaVendedorComparada
+    {
+        public string CodVen { get; set; } = "";
+        public decimal TotalHoy { get; set; }
+        public decimal TotalAnt { get; set; }
+
+        public decimal Variacion =>
+            TotalAnt == 0 ? 0 : Math.Round((TotalHoy - TotalAnt) / TotalAnt * 100, 1);
+    }
+
     public class CobrosPorCobrador
     {
         public string CodCob { get; set; } = "";
@@ -84,6 +95,25 @@ namespace DocumentoElectronico.Models
                 .GroupBy(v => v.CodVen)
                 .Select(g => new VentasPorVendedor { CodVen = g.Key, Total = g.Sum(v => v.Monto2) })
                 .OrderBy(v => v.CodVen);
+
+        // ── Ventas por vendedor con variación hoy vs año anterior ─────────────
+        public IEnumerable<VentaVendedorComparada> VentasPorVendedorConVariacion
+        {
+            get
+            {
+                var hoy = VentasHoyAgrupadas.ToDictionary(v => v.CodVen, v => v.Total);
+                var ant = VentasAntAgrupadas.ToDictionary(v => v.CodVen, v => v.Total);
+
+                return hoy.Keys.Union(ant.Keys)
+                    .OrderBy(codVen => codVen)
+                    .Select(codVen => new VentaVendedorComparada
+                    {
+                        CodVen = codVen,
+                        TotalHoy = hoy.GetValueOrDefault(codVen),
+                        TotalAnt = ant.GetValueOrDefault(codVen)
+                    });
+            }
+        }
 
         public IEnumerable<CobrosPorCobrador> CobrosHoyAgrupados =>
             CobrosHoy
