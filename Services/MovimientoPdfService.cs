@@ -238,10 +238,14 @@ namespace DocumentosElectronicos.Services
                         .DefaultTextStyle(t => t.FontSize(8)).Text(v.CodVen);
                     table.Cell().Background(bg).Padding(4).AlignRight()
                         .DefaultTextStyle(t => t.FontSize(8)).Text(Gs(v.TotalHoy));
-                    table.Cell().Background(bg).Padding(4).AlignRight()
-                        .Text(t => t.Span(v.Variacion >= 0 ? $"▲ +{v.Variacion}%" : $"▼ {v.Variacion}%")
+                    table.Cell().Background(bg).Padding(4).AlignRight().Column(vc =>
+                    {
+                        vc.Item().AlignRight().Text(t => t.Span(v.Variacion >= 0 ? $"▲ +{v.Variacion}%" : $"▼ {v.Variacion}%")
                             .FontSize(8).Bold()
                             .FontColor(v.Variacion >= 0 ? "#1A7A1A" : ColorRojo));
+                        vc.Item().AlignRight().Text(t => t.Span($"Ant: {Gs(v.TotalAnt)}")
+                            .FontSize(6).FontColor("#888888"));
+                    });
                     par = !par;
                 }
 

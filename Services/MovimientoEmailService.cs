@@ -121,6 +121,7 @@ namespace DocumentosElectronicos.Services
   .card-var     {{ display:inline-block; margin-top:6px; font-size:11px; font-weight:700; padding:2px 6px; border-radius:3px; }}
   .card-var.pos {{ background:#E8F5E9; color:#1A7A1A; }}
   .card-var.neg {{ background:#FFEBEE; color:#C8102E; }}
+  .var-ant      {{ font-size:10px; color:#888888; margin-top:2px; }}
 
   /* TABLA POR EMPRESA */
   .section-title {{ font-size:10px; font-weight:700; letter-spacing:.5px; color:#C8102E; border-left:3px solid #C8102E; padding-left:8px; margin:20px 0 8px; text-transform:uppercase; }}
@@ -211,12 +212,14 @@ namespace DocumentosElectronicos.Services
             return $"<span class='card-var {varClass}'>{varSig} vs {añoAnt}</span>";
         }
 
-        // Variante compacta (sin "vs año"), para usar en una celda por fila
-        private static string BadgeVariacionCompacta(decimal var)
+        // Variante compacta (sin "vs año"), para usar en una celda por fila,
+        // con el monto del período anterior debajo del porcentaje
+        private static string BadgeVariacionCompacta(decimal var, decimal montoAnt)
         {
             var varClass = var >= 0 ? "pos" : "neg";
             var varSig = var >= 0 ? $"▲ +{var}%" : $"▼ {var}%";
-            return $"<span class='card-var {varClass}'>{varSig}</span>";
+            return $@"<span class='card-var {varClass}'>{varSig}</span>
+<div class='var-ant'>Ant: Gs. {Gs(montoAnt)}</div>";
         }
 
         private string DetalleEmpresas(MovimientoReporte reporte, int añoHoy, int añoAnt, string periodoAnt)
@@ -234,7 +237,7 @@ namespace DocumentosElectronicos.Services
   <tr><th>Vendedor</th><th class='r'>Total Ventas</th><th class='r'>Var. %</th></tr>");
 
                 foreach (var v in empresa.VentasPorVendedorConVariacion)
-                    sb.Append($"<tr><td>{v.CodVen}</td><td class='r'>Gs. {Gs(v.TotalHoy)}</td><td class='r'>{BadgeVariacionCompacta(v.Variacion)}</td></tr>");
+                    sb.Append($"<tr><td>{v.CodVen}</td><td class='r'>Gs. {Gs(v.TotalHoy)}</td><td class='r'>{BadgeVariacionCompacta(v.Variacion, v.TotalAnt)}</td></tr>");
 
                 sb.Append($@"
   <tr class='total'><td>Total {añoHoy}</td><td class='r'>Gs. {Gs(empresa.TotalVentasHoy)}</td><td class='r'></td></tr>
